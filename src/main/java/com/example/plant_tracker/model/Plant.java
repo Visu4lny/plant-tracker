@@ -12,7 +12,7 @@ public class Plant {
     @Column(unique = true, nullable = false)
     private String name;
 
-    private LocalDateTime wateringTime;
+    private LocalDateTime lastWateredTime;
 
     public Plant() {
     }
@@ -20,7 +20,7 @@ public class Plant {
     public Plant(Long id, String name, LocalDateTime wateringTime) {
         this.id = id;
         this.name = name;
-        this.wateringTime = wateringTime;
+        this.lastWateredTime = wateringTime;
     }
 
     public Plant(String name) {
@@ -29,7 +29,12 @@ public class Plant {
 
     public Plant(String name, LocalDateTime wateringTime) {
         this.name = name;
-        this.wateringTime = wateringTime;
+        this.lastWateredTime = wateringTime;
+    }
+
+    public Plant(Long id, String name) {
+        this.id = id;
+        this.name = name;
     }
 
     public Long getId() {
@@ -48,11 +53,11 @@ public class Plant {
         this.name = name;
     }
 
-    public LocalDateTime getWateringTime() {
-        return wateringTime;
+    public LocalDateTime getLastWateredTime() {
+        return lastWateredTime;
     }
 
-    public void setWateringTime(LocalDateTime wateringTime) {
-        this.wateringTime = wateringTime;
+    public void setLastWateredTime(LocalDateTime lastWateredTime) {
+        this.lastWateredTime = lastWateredTime;
     }
 }
