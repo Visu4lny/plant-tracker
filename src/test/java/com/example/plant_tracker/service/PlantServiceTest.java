@@ -1,5 +1,6 @@
 package com.example.plant_tracker.service;
 
+import com.example.plant_tracker.dto.CreatePlantRequest;
 import com.example.plant_tracker.dto.PlantResponse;
 import com.example.plant_tracker.exception.PlantAlreadyExistsException;
 import com.example.plant_tracker.exception.PlantNotFoundException;
@@ -34,28 +35,30 @@ class PlantServiceTest {
     }
 
     @Test
-    void should_AddNewPlant() {
+    void createPlant_CreatesPlantAndReturnsPlantResponse() {
         Plant newPlant = new Plant("Paproć");
         when(plantRepository.save(any(Plant.class))).thenReturn(newPlant);
 
-        PlantResponse createdPlant = plantService.createPlant("Paproć");
+        CreatePlantRequest request = new CreatePlantRequest("Paproć");
+
+        PlantResponse createdPlant = plantService.createPlant(request);
 
         assertEquals(createdPlant.name(), newPlant.getName());
         verify(plantRepository).save(any(Plant.class));
     }
 
     @Test
-    void should_ThrowPlantAlreadyExistsException_When_AddingPlantWithAlreadyExistingName() {
-        String name = "Paproć";
-        when(plantRepository.existsByName(name)).thenReturn(true);
+    void createPlant_ThrowsPlantAlreadyExistsException_WhenPlantAlreadyExists() {
+        CreatePlantRequest request = new CreatePlantRequest("Paproć");
+        when(plantRepository.existsByName(request.name())).thenReturn(true);
 
-        assertThatThrownBy(() -> plantService.createPlant(name))
+        assertThatThrownBy(() -> plantService.createPlant(request))
                 .isInstanceOf(PlantAlreadyExistsException.class)
-                .hasMessageContaining("Plant '" + name + "' already exists");
+                .hasMessageContaining("Plant '" + request.name() + "' already exists");
     }
 
     @Test
-    void should_ReturnAllPlants_When_RepositoryHasPlants() {
+    void getAllPlants_ReturnsPlants_WhenPlantsExsist() {
         LocalDateTime testTime = LocalDateTime.now();
         Plant fern = new Plant(1L, "Paproć", testTime.minusDays(1));
         Plant oleander = new Plant(2L, "Oleander");
@@ -65,74 +68,74 @@ class PlantServiceTest {
 
         when(plantRepository.findAll()).thenReturn(mockPlants);
 
-        List<Plant> result = plantService.getAllPlants();
+        List<PlantResponse> result = plantService.getAllPlants();
 
         assertThat(result)
                 .hasSize(3)
-                .extracting(Plant::getName)
+                .extracting(PlantResponse::name)
                 .containsExactly("Paproć", "Oleander", "Oleander - pień");
 
         assertThat(result.get(0))
-                .extracting(Plant::getLastWateredTime)
+                .extracting(PlantResponse::lastWatered)
                 .isEqualTo(testTime.minusDays(1));
 
         assertThat(result.get(2))
-                .extracting(Plant::getLastWateredTime)
+                .extracting(PlantResponse::lastWatered)
                 .isEqualTo(testTime.minusDays(3));
 
         assertThat(result.get(1))
-                .extracting(Plant::getLastWateredTime)
+                .extracting(PlantResponse::lastWatered)
                 .isNull();
     }
 
     @Test
-    void should_ReturnEmptyList_When_NoPlantsExist() {
+    void getAllPlants_ReturnsEmptyList_WhenNoPlantsExist() {
         when(plantRepository.findAll()).thenReturn(Collections.emptyList());
         assertThat(plantService.getAllPlants()).isEmpty();
     }
 
     @Test
-    void should_SetLastWateredTime() {
+    void setLastWateredTime_SetsLastWateredTimeAndReturnsPlantResponse() {
         Plant plant = new Plant(1L, "Paproć");
 
         LocalDateTime lastWateredTime = LocalDateTime.now();
         when(plantRepository.findById(1L)).thenReturn(Optional.of(plant));
 
-        Plant result = plantService.setLastWateredTime(1L, lastWateredTime);
+        PlantResponse result = plantService.updateLastWateredTime(1L, lastWateredTime);
 
-        assertEquals(1L, result.getId());
-        assertEquals("Paproć", result.getName());
-        assertEquals(lastWateredTime, result.getLastWateredTime());
+        assertEquals(1L, result.id());
+        assertEquals("Paproć", result.name());
+        assertEquals(lastWateredTime, result.lastWatered());
     }
 
     @Test
-    void should_ThrowPlantNotFoundException_When_WateringNonExsistentPlant() {
+    void setLastWateredTime_ThrowsPlantNotFoundException_WhenWateringNonExsistentPlant() {
         LocalDateTime lastWateredTime = LocalDateTime.now();
         when(plantRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> plantService.setLastWateredTime(1L, lastWateredTime))
+        assertThatThrownBy(() -> plantService.updateLastWateredTime(1L, lastWateredTime))
                 .isInstanceOf(PlantNotFoundException.class)
                 .hasMessageContaining("Plant with id '" + 1L + "' does not exist");
     }
 
     @Test
-    void should_RemovePlant_When_PlantExists() {
+    void removePlant_RemovesPlant_WhenPlantExists() {
         Long plantId = 1L;
 
         Plant plant = new Plant(1L, "Paproć", LocalDateTime.now().minusDays(1));
         when(plantRepository.findById(1L)).thenReturn(Optional.of(plant));
 
-        plantService.removePlant(plantId);
+        plantService.deletePlant(plantId);
 
         verify(plantRepository).delete(plant);
     }
 
     @Test
-    void should_ThrowPlantNotFoundException_When_PlantNotFound() {
+    void removePlant_ThrowsPlantNotFoundException_WhenPlantNotFound() {
         Long nonExistentPlantId = 1L;
         when(plantRepository.findById(nonExistentPlantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> plantService.removePlant(nonExistentPlantId))
+        assertThatThrownBy(() -> plantService.deletePlant(nonExistentPlantId))
                 .isInstanceOf(PlantNotFoundException.class)
                 .hasMessageContaining("Plant with id '" + nonExistentPlantId + "' does not exist");
 

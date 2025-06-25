@@ -1,5 +1,6 @@
 package com.example.plant_tracker.service;
 
+import com.example.plant_tracker.dto.CreatePlantRequest;
 import com.example.plant_tracker.dto.PlantResponse;
 import com.example.plant_tracker.exception.PlantAlreadyExistsException;
 import com.example.plant_tracker.exception.PlantNotFoundException;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -22,11 +24,11 @@ public class PlantService {
     }
 
 
-    public PlantResponse createPlant(String name) {
-        if (plantRepository.existsByName(name)) {
-            throw new PlantAlreadyExistsException(name);
+    public PlantResponse createPlant(CreatePlantRequest request) {
+        if (plantRepository.existsByName(request.name())) {
+            throw new PlantAlreadyExistsException(request.name());
         }
-        Plant plant = new Plant(name);
+        Plant plant = new Plant(request.name());
         Plant savedPlant = plantRepository.save(plant);
         PlantResponse plantResponse = new PlantResponse(
                 savedPlant.getId(),
@@ -35,20 +37,34 @@ public class PlantService {
         return plantResponse;
     }
 
-    public List<Plant> getAllPlants() {
+    public List<PlantResponse> getAllPlants() {
         List<Plant> plants = plantRepository.findAll();
 
-        return plants;
+        List<PlantResponse> response = plants.stream()
+                .map(plant -> new PlantResponse(
+                        plant.getId(),
+                        plant.getName(),
+                        plant.getLastWateredTime()
+                ))
+                .collect(Collectors.toList());
+
+        return response;
     }
 
-    public Plant setLastWateredTime(Long id, LocalDateTime lastWateredTime) {
+    public PlantResponse updateLastWateredTime(Long id, LocalDateTime lastWateredTime) {
         Plant plant = plantRepository.findById(id)
                 .orElseThrow(() -> new PlantNotFoundException(id));
         plant.setLastWateredTime(lastWateredTime);
-        return plant;
+
+        PlantResponse response = new PlantResponse(
+                plant.getId(),
+                plant.getName(),
+                plant.getLastWateredTime()
+        );
+        return response;
     }
 
-    public void removePlant(Long id) {
+    public void deletePlant(Long id) {
         Plant plant = plantRepository.findById(id)
                 .orElseThrow(() -> new PlantNotFoundException(id));
         plantRepository.delete(plant);
