@@ -4,10 +4,10 @@ import com.example.plant_tracker.dto.PlantResponse;
 import com.example.plant_tracker.exception.PlantAlreadyExistsException;
 import com.example.plant_tracker.exception.PlantNotFoundException;
 import com.example.plant_tracker.service.PlantService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,12 +31,6 @@ class PlantControllerTest {
     private MockMvc mockMvc;
     @MockitoBean
     private PlantService plantService;
-    private PlantController plantController;
-
-    @BeforeEach
-    void setUp() {
-        plantController = new PlantController(plantService);
-    }
 
     @Test
     void createPlant_Returns201_WhenValidRequest() throws Exception {
@@ -75,33 +69,53 @@ class PlantControllerTest {
 
     @Test
     void getAllPlants_Returns200WithPlants_WhenPlantsExist() throws Exception {
-        LocalDateTime localDateTime = LocalDateTime.now().minusDays(3);
-        PlantResponse plant1 = new PlantResponse(1L, "Oleander", null);
-        PlantResponse plant2 = new PlantResponse(2L, "Paproć", localDateTime);
+        PlantResponse plant1 = new PlantResponse(1L, "Paproć", null);
+        PlantResponse plant2 = new PlantResponse(2L, "Mięta", null);
 
-        when(plantService.getAllPlants()).thenReturn(List.of(plant1, plant2));
+        when(plantService.getAllPlants(Sort.Direction.ASC, "name")).thenReturn(List.of(plant2, plant1));
+        mockMvc.perform(get("/api/plants"))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$").isArray(),
+                        jsonPath("$").isNotEmpty(),
+                        jsonPath("$", hasSize(2))
+                );
+    }
+
+    @Test
+    void getAllPlant_ReturnsPlantsSortedByNameAsc_WhenNoSortParamGiven() throws Exception {
+        LocalDateTime localDateTime = LocalDateTime.now().minusDays(3);
+        PlantResponse plant1 = new PlantResponse(1L, "Paproć", localDateTime);
+        PlantResponse plant2 = new PlantResponse(2L, "Mięta", null);
+        PlantResponse plant3 = new PlantResponse(3L, "Oleander", null);
+
+        when(plantService.getAllPlants(Sort.Direction.ASC, "name")).thenReturn(List.of(plant2, plant3, plant1));
 
         mockMvc.perform(get("/api/plants"))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$", hasSize(2)),
-                        jsonPath("$[0].id").value(1),
-                        jsonPath("$[0].name").value("Oleander"),
+                        jsonPath("$", hasSize(3)),
+                        jsonPath("$[0].id").value(2),
+                        jsonPath("$[0].name").value("Mięta"),
                         jsonPath("$[0].lastWatered").isEmpty(),
-                        jsonPath("$[1].id").value(2),
-                        jsonPath("$[1].name").value("Paproć"),
-                        jsonPath("$[1].lastWatered").value(localDateTime.toString())
+                        jsonPath("$[1].id").value(3),
+                        jsonPath("$[1].name").value("Oleander"),
+                        jsonPath("$[1].lastWatered").isEmpty(),
+                        jsonPath("$[2].id").value(1),
+                        jsonPath("$[2].name").value("Paproć"),
+                        jsonPath("$[2].lastWatered").value(localDateTime.toString())
                 );
     }
 
     @Test
     void getAllPlants_Returns200WithEmptyList_WhenNoPlantsExist() throws Exception {
-        when(plantService.getAllPlants()).thenReturn(Collections.emptyList());
+        when(plantService.getAllPlants(Sort.Direction.ASC, "name")).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/plants"))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$").isArray()
+                        jsonPath("$").isArray(),
+                        jsonPath("$").isEmpty()
                 );
     }
 

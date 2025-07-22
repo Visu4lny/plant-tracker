@@ -7,11 +7,11 @@ import com.example.plant_tracker.exception.PlantNotFoundException;
 import com.example.plant_tracker.model.Plant;
 import com.example.plant_tracker.repository.PlantRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -30,25 +30,22 @@ public class PlantService {
         }
         Plant plant = new Plant(request.name());
         Plant savedPlant = plantRepository.save(plant);
-        PlantResponse plantResponse = new PlantResponse(
+        return new PlantResponse(
                 savedPlant.getId(),
                 savedPlant.getName(),
                 savedPlant.getLastWateredTime());
-        return plantResponse;
     }
 
-    public List<PlantResponse> getAllPlants() {
-        List<Plant> plants = plantRepository.findAll();
+    public List<PlantResponse> getAllPlants(Sort.Direction direction, String property) {
+        List<Plant> plants = plantRepository.findAll(Sort.by(direction, property));
 
-        List<PlantResponse> response = plants.stream()
+        return plants.stream()
                 .map(plant -> new PlantResponse(
                         plant.getId(),
                         plant.getName(),
                         plant.getLastWateredTime()
                 ))
-                .collect(Collectors.toList());
-
-        return response;
+                .toList();
     }
 
     public PlantResponse updateLastWateredTime(Long id, LocalDateTime lastWateredTime) {
@@ -56,12 +53,11 @@ public class PlantService {
                 .orElseThrow(() -> new PlantNotFoundException(id));
         plant.setLastWateredTime(lastWateredTime);
 
-        PlantResponse response = new PlantResponse(
+        return new PlantResponse(
                 plant.getId(),
                 plant.getName(),
                 plant.getLastWateredTime()
         );
-        return response;
     }
 
     public void deletePlant(Long id) {

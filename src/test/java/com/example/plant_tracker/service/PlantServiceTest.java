@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -58,17 +59,20 @@ class PlantServiceTest {
     }
 
     @Test
-    void getAllPlants_ReturnsPlants_WhenPlantsExsist() {
+    void getAllPlants_ReturnsPlants_WhenPlantsExists() {
         LocalDateTime testTime = LocalDateTime.now();
         Plant fern = new Plant(1L, "Paproć", testTime.minusDays(1));
         Plant oleander = new Plant(2L, "Oleander");
         Plant oleanderTree = new Plant(3L, "Oleander - pień", testTime.minusDays(3));
 
+        Sort.Direction direction = Sort.Direction.ASC;
+        String property = "name";
+
         List<Plant> mockPlants = Arrays.asList(fern, oleander, oleanderTree);
 
-        when(plantRepository.findAll()).thenReturn(mockPlants);
+        when(plantRepository.findAll(Sort.by(direction, property))).thenReturn(mockPlants);
 
-        List<PlantResponse> result = plantService.getAllPlants();
+        List<PlantResponse> result = plantService.getAllPlants(direction, property);
 
         assertThat(result)
                 .hasSize(3)
@@ -90,8 +94,8 @@ class PlantServiceTest {
 
     @Test
     void getAllPlants_ReturnsEmptyList_WhenNoPlantsExist() {
-        when(plantRepository.findAll()).thenReturn(Collections.emptyList());
-        assertThat(plantService.getAllPlants()).isEmpty();
+        when(plantRepository.findAll(Sort.by(Sort.Direction.ASC, "name"))).thenReturn(Collections.emptyList());
+        assertThat(plantService.getAllPlants(Sort.Direction.ASC, "name")).isEmpty();
     }
 
     @Test
@@ -109,7 +113,7 @@ class PlantServiceTest {
     }
 
     @Test
-    void setLastWateredTime_ThrowsPlantNotFoundException_WhenWateringNonExsistentPlant() {
+    void setLastWateredTime_ThrowsPlantNotFoundException_WhenWateringNonExistentPlant() {
         LocalDateTime lastWateredTime = LocalDateTime.now();
         when(plantRepository.findById(1L)).thenReturn(Optional.empty());
 

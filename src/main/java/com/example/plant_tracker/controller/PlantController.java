@@ -5,6 +5,7 @@ import com.example.plant_tracker.dto.PlantResponse;
 import com.example.plant_tracker.dto.UpdateLastWateredRequest;
 import com.example.plant_tracker.service.PlantService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,8 +33,14 @@ public class PlantController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PlantResponse>> getAllPlants() {
-        List<PlantResponse> response = plantService.getAllPlants();
+    public ResponseEntity<List<PlantResponse>> getAllPlants(
+            @RequestParam(defaultValue = "name,asc") String sort
+    ) {
+        String[] sortParams = sort.split(",");
+        String property = sortParams[0];
+        Sort.Direction direction = sortParams.length > 1 ?
+                Sort.Direction.fromString(sortParams[1]) :Sort.Direction.ASC;
+        List<PlantResponse> response = plantService.getAllPlants(direction, property);
         return ResponseEntity.ok().body(response);
     }
 
