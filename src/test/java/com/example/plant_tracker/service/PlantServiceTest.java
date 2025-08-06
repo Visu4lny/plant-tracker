@@ -30,6 +30,14 @@ class PlantServiceTest {
 
     private PlantService plantService;
 
+    private List<UUID> plantIds;
+
+    private void generateUUIDs(int amount) {
+        plantIds = new ArrayList<>();
+        for (int i = 0; i < amount; i++) {
+            plantIds.add(UUID.randomUUID());
+        }
+    }
     @BeforeEach
     void setUp() {
         plantService = new PlantService(plantRepository);
@@ -60,15 +68,16 @@ class PlantServiceTest {
 
     @Test
     void getAllPlants_ReturnsPlants_WhenPlantsExists() {
+        generateUUIDs(3);
         LocalDateTime testTime = LocalDateTime.now();
-        Plant fern = new Plant(1L, "Paproć", testTime.minusDays(1));
-        Plant oleander = new Plant(2L, "Oleander");
-        Plant oleanderTree = new Plant(3L, "Oleander - pień", testTime.minusDays(3));
+        Plant plant1 = new Plant(plantIds.get(0), "Paproć", testTime.minusDays(1));
+        Plant plant2 = new Plant(plantIds.get(1), "Oleander");
+        Plant plant3 = new Plant(plantIds.get(2), "Mięta", testTime.minusDays(3));
 
         Sort.Direction direction = Sort.Direction.ASC;
         String property = "name";
 
-        List<Plant> mockPlants = Arrays.asList(fern, oleander, oleanderTree);
+        List<Plant> mockPlants = Arrays.asList(plant1, plant2, plant3);
 
         when(plantRepository.findAll(Sort.by(direction, property))).thenReturn(mockPlants);
 
@@ -77,7 +86,7 @@ class PlantServiceTest {
         assertThat(result)
                 .hasSize(3)
                 .extracting(PlantResponse::name)
-                .containsExactly("Paproć", "Oleander", "Oleander - pień");
+                .containsExactly("Paproć", "Oleander", "Mięta");
 
         assertThat(result.get(0))
                 .extracting(PlantResponse::lastWatered)
@@ -100,48 +109,52 @@ class PlantServiceTest {
 
     @Test
     void setLastWateredTime_SetsLastWateredTimeAndReturnsPlantResponse() {
-        Plant plant = new Plant(1L, "Paproć");
+        generateUUIDs(1);
+        Plant plant = new Plant(plantIds.get(0), "Paproć");
 
         LocalDateTime lastWateredTime = LocalDateTime.now();
-        when(plantRepository.findById(1L)).thenReturn(Optional.of(plant));
+        when(plantRepository.findById(plantIds.get(0))).thenReturn(Optional.of(plant));
 
-        PlantResponse result = plantService.updateLastWateredTime(1L, lastWateredTime);
+        PlantResponse result = plantService.updateLastWateredTime(plantIds.get(0), lastWateredTime);
 
-        assertEquals(1L, result.id());
+        assertEquals(plantIds.get(0), result.id());
         assertEquals("Paproć", result.name());
         assertEquals(lastWateredTime, result.lastWatered());
     }
 
     @Test
     void setLastWateredTime_ThrowsPlantNotFoundException_WhenWateringNonExistentPlant() {
+        generateUUIDs(1);
         LocalDateTime lastWateredTime = LocalDateTime.now();
-        when(plantRepository.findById(1L)).thenReturn(Optional.empty());
+        when(plantRepository.findById(plantIds.get(0))).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> plantService.updateLastWateredTime(1L, lastWateredTime))
+        assertThatThrownBy(() -> plantService.updateLastWateredTime(plantIds.get(0), lastWateredTime))
                 .isInstanceOf(PlantNotFoundException.class)
-                .hasMessageContaining("Plant with id '" + 1L + "' does not exist");
+                .hasMessageContaining(
+                        "Plant with id '" + plantIds.get(0) + "' does not exist");
     }
 
     @Test
     void removePlant_RemovesPlant_WhenPlantExists() {
-        Long plantId = 1L;
+        generateUUIDs(1);
 
-        Plant plant = new Plant(1L, "Paproć", LocalDateTime.now().minusDays(1));
-        when(plantRepository.findById(1L)).thenReturn(Optional.of(plant));
+        Plant plant = new Plant(plantIds.get(0), "Paproć", LocalDateTime.now().minusDays(1));
+        when(plantRepository.findById(plantIds.get(0))).thenReturn(Optional.of(plant));
 
-        plantService.deletePlant(plantId);
+        plantService.deletePlant(plantIds.get(0));
 
         verify(plantRepository).delete(plant);
     }
 
     @Test
     void removePlant_ThrowsPlantNotFoundException_WhenPlantNotFound() {
-        Long nonExistentPlantId = 1L;
-        when(plantRepository.findById(nonExistentPlantId)).thenReturn(Optional.empty());
+        generateUUIDs(1);
+        when(plantRepository.findById(plantIds.get(0))).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> plantService.deletePlant(nonExistentPlantId))
+        assertThatThrownBy(() -> plantService.deletePlant(plantIds.get(0)))
                 .isInstanceOf(PlantNotFoundException.class)
-                .hasMessageContaining("Plant with id '" + nonExistentPlantId + "' does not exist");
+                .hasMessageContaining(
+                        "Plant with id '" + plantIds.get(0) + "' does not exist");
 
     }
 

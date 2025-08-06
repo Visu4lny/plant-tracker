@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/plants")
@@ -46,7 +47,7 @@ public class PlantController {
 
     @PatchMapping("/{id}/last-watered")
     public ResponseEntity<PlantResponse> updateLastWatered(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UpdateLastWateredRequest request
     ) {
         PlantResponse response = plantService.updateLastWateredTime(id, request.localDateTime());
@@ -55,7 +56,7 @@ public class PlantController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deletePlant(@PathVariable Long id) {
+    public void deletePlant(@PathVariable UUID id) {
         plantService.deletePlant(id);
     }
 }

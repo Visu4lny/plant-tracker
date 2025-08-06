@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -48,7 +49,7 @@ public class PlantService {
                 .toList();
     }
 
-    public PlantResponse updateLastWateredTime(Long id, LocalDateTime lastWateredTime) {
+    public PlantResponse updateLastWateredTime(UUID id, LocalDateTime lastWateredTime) {
         Plant plant = plantRepository.findById(id)
                 .orElseThrow(() -> new PlantNotFoundException(id));
         plant.setLastWateredTime(lastWateredTime);
@@ -60,7 +61,7 @@ public class PlantService {
         );
     }
 
-    public void deletePlant(Long id) {
+    public void deletePlant(UUID id) {
         Plant plant = plantRepository.findById(id)
                 .orElseThrow(() -> new PlantNotFoundException(id));
         plantRepository.delete(plant);

@@ -3,12 +3,13 @@ package com.example.plant_tracker.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 public class Plant {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     @Column(unique = true, nullable = false)
     private String name;
 
@@ -17,7 +18,7 @@ public class Plant {
     public Plant() {
     }
 
-    public Plant(Long id, String name, LocalDateTime wateringTime) {
+    public Plant(UUID id, String name, LocalDateTime wateringTime) {
         this.id = id;
         this.name = name;
         this.lastWateredTime = wateringTime;
@@ -32,16 +33,16 @@ public class Plant {
         this.lastWateredTime = wateringTime;
     }
 
-    public Plant(Long id, String name) {
+    public Plant(UUID id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
