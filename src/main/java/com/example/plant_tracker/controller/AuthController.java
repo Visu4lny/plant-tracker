@@ -11,7 +11,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,10 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    private AuthenticationManager authenticationManager;
-    private JwtUtils jwtUtils;
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager,
                           JwtUtils jwtUtils,
@@ -44,8 +43,8 @@ public class AuthController {
         User user = new User();
         user.setEmail(request.email());
         user.setUsername(request.username());
-        user.setPassword(request.password());
-        user.setRole("USER");
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setRole("ROLE_USER");
         userRepository.save(user); // TODO use service instead of direct repo
 
         return ResponseEntity.ok("User registered!");
@@ -58,9 +57,10 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
 
-            String jwt = jwtUtils.generateToken((User) auth.getPrincipal());
+            String jwt = jwtUtils.generateToken(request.email());
             return ResponseEntity.ok(new AuthResponse(jwt));
         } catch (Exception e) {
+            System.out.println(e);
             return ResponseEntity.status(401).body("Invalid credentials");
         }
     }

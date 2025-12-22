@@ -22,7 +22,7 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String password;
     private String role;
-    @OneToMany(mappedBy = "users")
+    @OneToMany(mappedBy = "user")
     private List<Plant> plants;
 
     public User() {

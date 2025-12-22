@@ -1,8 +1,8 @@
 package com.example.plant_tracker.security.jwt;
 
-import com.example.plant_tracker.model.User;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -20,16 +19,12 @@ public class JwtUtils {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public String generateToken(User user) {
+    public String generateToken(String email) {
         return Jwts.builder()
-                .subject(user.getUsername())
+                .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 1 day
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -53,5 +48,10 @@ public class JwtUtils {
             logger.error("Invalid JWT token", e);
             return false;
         }
+    }
+
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
