@@ -2,7 +2,7 @@ package com.example.plant_tracker.model;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -10,32 +10,42 @@ public class Plant {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
     @Column(unique = true, nullable = false)
     private String name;
 
-    private LocalDateTime lastWateredTime;
+    private Instant lastWateredAt;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     public Plant() {
     }
 
-    public Plant(UUID id, String name, LocalDateTime wateringTime) {
+    public Plant(UUID id, String name, Instant lastWateredAt) {
         this.id = id;
         this.name = name;
-        this.lastWateredTime = wateringTime;
+        this.lastWateredAt = lastWateredAt;
     }
 
     public Plant(String name) {
         this.name = name;
     }
 
-    public Plant(String name, LocalDateTime wateringTime) {
+    public Plant(String name, Instant lastWateredAt) {
         this.name = name;
-        this.lastWateredTime = wateringTime;
+        this.lastWateredAt = lastWateredAt;
     }
 
     public Plant(UUID id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    public Plant(String name, User user) {
+        this.name = name;
+        this.user = user;
     }
 
     public UUID getId() {
@@ -54,11 +64,11 @@ public class Plant {
         this.name = name;
     }
 
-    public LocalDateTime getLastWateredTime() {
-        return lastWateredTime;
+    public Instant getLastWateredTime() {
+        return lastWateredAt;
     }
 
-    public void setLastWateredTime(LocalDateTime lastWateredTime) {
-        this.lastWateredTime = lastWateredTime;
+    public void setLastWateredTime(Instant lastWateredTime) {
+        this.lastWateredAt = lastWateredTime;
     }
 }
