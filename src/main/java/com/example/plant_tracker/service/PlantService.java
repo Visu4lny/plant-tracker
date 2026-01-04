@@ -2,7 +2,7 @@ package com.example.plant_tracker.service;
 
 import com.example.plant_tracker.dto.CreatePlantRequest;
 import com.example.plant_tracker.dto.PlantResponse;
-import com.example.plant_tracker.exception.PlantAlreadyExistsException;
+import com.example.plant_tracker.exception.PlantExistsException;
 import com.example.plant_tracker.exception.PlantNotFoundException;
 import com.example.plant_tracker.model.Plant;
 import com.example.plant_tracker.model.User;
@@ -30,7 +30,7 @@ public class PlantService {
 
     public PlantResponse createPlant(CreatePlantRequest request, String email) {
         if (plantRepository.existsByName(request.name())) {
-            throw new PlantAlreadyExistsException(request.name());
+            throw new PlantExistsException(request.name());
         }
         User user = userService.findByEmail(email);
         Plant plant = new Plant(request.name(), user);

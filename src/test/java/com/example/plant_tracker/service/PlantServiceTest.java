@@ -2,7 +2,7 @@ package com.example.plant_tracker.service;
 
 import com.example.plant_tracker.dto.CreatePlantRequest;
 import com.example.plant_tracker.dto.PlantResponse;
-import com.example.plant_tracker.exception.PlantAlreadyExistsException;
+import com.example.plant_tracker.exception.PlantExistsException;
 import com.example.plant_tracker.exception.PlantNotFoundException;
 import com.example.plant_tracker.model.Plant;
 import com.example.plant_tracker.model.User;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Sort;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.Period;
 import java.time.ZoneOffset;
 import java.util.*;
 
@@ -72,7 +71,7 @@ class PlantServiceTest {
         when(plantRepository.existsByName(request.name())).thenReturn(true);
 
         assertThatThrownBy(() -> plantService.createPlant(request, email))
-                .isInstanceOf(PlantAlreadyExistsException.class)
+                .isInstanceOf(PlantExistsException.class)
                 .hasMessageContaining("Plant '" + request.name() + "' already exists");
     }
 

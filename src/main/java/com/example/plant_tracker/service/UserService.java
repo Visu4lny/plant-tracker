@@ -2,6 +2,7 @@ package com.example.plant_tracker.service;
 
 import com.example.plant_tracker.model.User;
 import com.example.plant_tracker.repository.UserRepository;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -19,4 +20,11 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 
+    public boolean existsByEmail(@NotBlank String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public User createUser(User user) {
+        return userRepository.save(user);
+    }
 }

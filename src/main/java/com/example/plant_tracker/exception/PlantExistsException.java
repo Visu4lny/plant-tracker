@@ -1,8 +1,8 @@
 package com.example.plant_tracker.exception;
 
-public class PlantAlreadyExistsException extends RuntimeException {
+public class PlantExistsException extends RuntimeException {
 
-    public PlantAlreadyExistsException(String plantName) {
+    public PlantExistsException(String plantName) {
         super("Plant '" + plantName + "' already exists");
     }
 }

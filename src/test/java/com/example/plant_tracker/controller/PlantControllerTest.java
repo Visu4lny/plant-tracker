@@ -1,8 +1,7 @@
 package com.example.plant_tracker.controller;
 
-import com.example.plant_tracker.dto.CreatePlantRequest;
 import com.example.plant_tracker.dto.PlantResponse;
-import com.example.plant_tracker.exception.PlantAlreadyExistsException;
+import com.example.plant_tracker.exception.PlantExistsException;
 import com.example.plant_tracker.exception.PlantNotFoundException;
 import com.example.plant_tracker.security.SecurityConfig;
 import com.example.plant_tracker.security.jwt.JwtUtils;
@@ -40,6 +39,7 @@ class PlantControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
     @MockitoBean
     private PlantService plantService;
 
@@ -62,7 +62,6 @@ class PlantControllerTest {
     }
 
     private final String email = "user@example.com";
-
 
     @Test
     @WithMockUser(username = "user@example.com")
@@ -93,7 +92,7 @@ class PlantControllerTest {
     @WithMockUser(username = "user@example.com")
     void createPlant_Returns409_WhenPlantAlreadyExists() throws Exception {
         when(plantService.createPlant(any(), eq(email)))
-                .thenThrow(new PlantAlreadyExistsException("Oleander"));
+                .thenThrow(new PlantExistsException("Oleander"));
 
         mockMvc.perform(post("/api/plants")
                 .contentType(MediaType.APPLICATION_JSON)
