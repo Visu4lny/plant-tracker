@@ -1,6 +1,5 @@
 package com.example.plant_tracker.security.jwt;
 
-import com.example.plant_tracker.security.SecurityConfig;
 import com.example.plant_tracker.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,7 +20,7 @@ import java.io.IOException;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     private final JwtUtils jwtUtils;
 
@@ -43,8 +42,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (token != null && jwtUtils.isTokenValid(token)) {
                 String username = jwtUtils.extractUsername(token);
-                System.out.println(username);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(
                                 username,
@@ -56,7 +55,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         } catch (Exception e) {
-            logger.error("JWT validation failed: {}", e.getMessage(), e);
+            log.error("JWT validation failed: {}", e.getMessage(), e);
         }
         filterChain.doFilter(request, response);
     }
