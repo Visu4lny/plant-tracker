@@ -3,11 +3,18 @@ package com.example.plant_tracker.controller;
 import com.example.plant_tracker.dto.AuthResponse;
 import com.example.plant_tracker.dto.LoginRequest;
 import com.example.plant_tracker.dto.RegisterRequest;
+import com.example.plant_tracker.exception.EmailExistsException;
 import com.example.plant_tracker.model.User;
-import com.example.plant_tracker.repository.UserRepository;
 import com.example.plant_tracker.security.jwt.JwtUtils;
+import com.example.plant_tracker.service.AuthService;
+import com.example.plant_tracker.service.UserService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,53 +22,56 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    private final AuthenticationManager authenticationManager;
-    private final JwtUtils jwtUtils;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    public AuthController(AuthenticationManager authenticationManager,
-                          JwtUtils jwtUtils,
-                          UserRepository userRepository,
-                          PasswordEncoder passwordEncoder) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtils = jwtUtils;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+//    private final AuthenticationManager authenticationManager;
+//    private final JwtUtils jwtUtils;
+//    private final UserService userService;
+//    private final PasswordEncoder passwordEncoder;
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            return ResponseEntity.badRequest().body("Email already exists");
-        }
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) throws EmailExistsException {
+        log.info("Registration attempt for email: {}", request.email());
 
-        User user = new User();
-        user.setEmail(request.email());
-        user.setUsername(request.username());
-        user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole("ROLE_USER");
-        userRepository.save(user); // TODO use service instead of direct repo
+        AuthResponse response = authService.register(request);
+        log.info("User registered: {}", request.email());
 
-        return ResponseEntity.ok("User registered!");
+        URI location = buildUserUri(response.userId());
+
+        return ResponseEntity.created(location)
+                .body(response);
+    }
+
+    private static URI buildUserUri(UUID userId) {
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(userId)
+                .toUri();
+        return location;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-            Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
-            );
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.info("Login attempt for email: {}", request.email());
 
-            String jwt = jwtUtils.generateToken(request.email());
-            return ResponseEntity.ok(new AuthResponse(jwt));
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(401).body("Invalid credentials");
-        }
+        AuthResponse response = authService.login(request);
+        log.info("Login successful for: {}", request.email());
+
+        return ResponseEntity.ok(response);
     }
 }

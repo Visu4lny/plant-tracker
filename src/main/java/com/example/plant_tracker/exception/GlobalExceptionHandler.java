@@ -1,8 +1,9 @@
 package com.example.plant_tracker.exception;
 
-import com.example.plant_tracker.model.Plant;
+import com.example.plant_tracker.dto.AuthResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(PlantAlreadyExistsException.class)
+    @ExceptionHandler(PlantExistsException.class)
     public ResponseEntity<String> handlePlantExists(
-            PlantAlreadyExistsException ex
+            PlantExistsException ex
     ) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
@@ -27,5 +28,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(EmailExistsException.class)
+    public ResponseEntity<AuthResponse> handleEmailExists(
+            EmailExistsException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new AuthResponse("", "Email already exists", null));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<AuthResponse> handleBadCredentials(
+            BadCredentialsException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new AuthResponse("", "Invalid credentials", null));
     }
 }
