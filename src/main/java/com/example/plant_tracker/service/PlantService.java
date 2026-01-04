@@ -38,7 +38,7 @@ public class PlantService {
         return new PlantResponse(
                 savedPlant.getId(),
                 savedPlant.getName(),
-                savedPlant.getLastWateredTime());
+                savedPlant.getLastWateredAt());
     }
 
     public List<PlantResponse> getUserPlants(Sort.Direction direction, String property, String email) {
@@ -49,7 +49,7 @@ public class PlantService {
                 .map(plant -> new PlantResponse(
                         plant.getId(),
                         plant.getName(),
-                        plant.getLastWateredTime()
+                        plant.getLastWateredAt()
                 ))
                 .toList();
     }
@@ -59,12 +59,12 @@ public class PlantService {
 
         Plant plant = plantRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new PlantNotFoundException(id));
-        plant.setLastWateredTime(Instant.now());
+        plant.setLastWateredAt(Instant.now());
 
         return new PlantResponse(
                 plant.getId(),
                 plant.getName(),
-                plant.getLastWateredTime()
+                plant.getLastWateredAt()
         );
     }
 

@@ -64,11 +64,11 @@ public class Plant {
         this.name = name;
     }
 
-    public Instant getLastWateredTime() {
+    public Instant getLastWateredAt() {
         return lastWateredAt;
     }
 
-    public void setLastWateredTime(Instant lastWateredTime) {
-        this.lastWateredAt = lastWateredTime;
+    public void setLastWateredAt(Instant lastWateredAt) {
+        this.lastWateredAt = lastWateredAt;
     }
 }
