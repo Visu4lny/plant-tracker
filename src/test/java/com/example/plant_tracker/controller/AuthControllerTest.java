@@ -88,6 +88,46 @@ class AuthControllerTest {
     }
 
     @Test
+    void register_BlankEmail_ReturnsBadRequest() throws Exception {
+        String invalidRequest = "{\"email\":\"\",\"username\":\"user\",\"password\":\"password123\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_InvalidEmailFormat_ReturnsBadRequest() throws Exception {
+        String invalidRequest = "{\"email\":\"not-an-email\",\"username\":\"user\",\"password\":\"password123\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_ShortUsername_ReturnsBadRequest() throws Exception {
+        String invalidRequest = "{\"email\":\"test@example.com\",\"username\":\"ab\",\"password\":\"password123\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_ShortPassword_ReturnsBadRequest() throws Exception {
+        String invalidRequest = "{\"email\":\"test@example.com\",\"username\":\"user\",\"password\":\"short\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void login_Success() throws Exception {
         LoginRequest request = new LoginRequest("test@example.com", "password123");
         AuthResponse response = new AuthResponse("jwt-token", "Login successful", null);
@@ -119,6 +159,26 @@ class AuthControllerTest {
                         jsonPath("$.jwt").isEmpty(),
                         jsonPath("$.message").value("Invalid credentials")
                 );
+    }
+
+    @Test
+    void login_BlankEmail_ReturnsBadRequest() throws Exception {
+        String invalidRequest = "{\"email\":\"\",\"password\":\"password123\"}";
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_ShortPassword_ReturnsBadRequest() throws Exception {
+        String invalidRequest = "{\"email\":\"test@example.com\",\"password\":\"short\"}";
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequest))
+                .andExpect(status().isBadRequest());
     }
 
     private User createTestUser(String email, String username) {
