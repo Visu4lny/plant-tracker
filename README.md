@@ -306,7 +306,7 @@ CREATE TABLE plants (
 - [ ] Plant photos storage
 - [ ] Watering schedule reminders
 - [ ] Plant species database
-- [ ] API documentation with Swagger/OpenAPI
+- [x] ~~API documentation with Swagger/OpenAPI~~
 - [ ] Integration tests
 
 ## License
