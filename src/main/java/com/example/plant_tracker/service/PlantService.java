@@ -54,7 +54,22 @@ public class PlantService {
                 .toList();
     }
 
-    public PlantResponse updateLastWateredTime(UUID id, String email) {
+    public PlantResponse updatePlantName(UUID id, String email, String newName) {
+        User user = userService.findByEmail(email);
+        Plant plant = plantRepository.findByIdAndUser(id, user)
+                        .orElseThrow(() -> new PlantNotFoundException(id));
+
+        plant.setName(newName);
+
+        return new PlantResponse(
+                plant.getId(),
+                plant.getName(),
+                plant.getLastWateredAt()
+        );
+
+    }
+
+    public PlantResponse updateLastWateredAt(UUID id, String email) {
         User user = userService.findByEmail(email);
 
         Plant plant = plantRepository.findByIdAndUser(id, user)

@@ -35,17 +35,9 @@ class PlantServiceTest {
 
     private PlantService plantService;
 
-    private List<UUID> plantIds;
-
-    private void generateUUIDs(int amount) {
-        plantIds = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
-            plantIds.add(UUID.randomUUID());
-        }
-    }
-
     private final String email = "test@test.com";
     private final User user = new User(UUID.randomUUID(), email, "username", "password", "user", new ArrayList<>());
+
     @BeforeEach
     void setUp() {
         plantService = new PlantService(plantRepository, userService);
@@ -77,11 +69,13 @@ class PlantServiceTest {
 
     @Test
     void getAllPlants_ReturnsPlants_WhenPlantsExists() {
-        generateUUIDs(3);
+        UUID plantId1 = UUID.randomUUID();
+        UUID plantId2 = UUID.randomUUID();
+        UUID plantId3 = UUID.randomUUID();
         Instant lastWateredAt = Instant.now();
-        Plant plant1 = new Plant(plantIds.get(0), "Paproć", lastWateredAt.minus(Duration.ofDays(1)));
-        Plant plant2 = new Plant(plantIds.get(1), "Oleander");
-        Plant plant3 = new Plant(plantIds.get(2), "Mięta", lastWateredAt.minus(Duration.ofDays(3)));
+        Plant plant1 = new Plant(plantId1, "Paproć", lastWateredAt.minus(Duration.ofDays(1)));
+        Plant plant2 = new Plant(plantId2, "Oleander");
+        Plant plant3 = new Plant(plantId3, "Mięta", lastWateredAt.minus(Duration.ofDays(3)));
 
         Sort.Direction direction = Sort.Direction.ASC;
         String property = "name";
@@ -120,56 +114,69 @@ class PlantServiceTest {
     }
 
     @Test
-    void setLastWateredTime_SetsLastWateredTimeAndReturnsPlantResponse() {
-        generateUUIDs(1);
-        Plant plant = new Plant(plantIds.get(0), "Paproć");
+    void updatePlantName_UpdatesPlantNameAndReturnsPlantResponse() {
+        UUID plantId = UUID.randomUUID();
+        Plant plant = new Plant(plantId, "Paproć");
+        when(userService.findByEmail(email)).thenReturn(user);
+        when(plantRepository.findByIdAndUser(plantId, user)).thenReturn(Optional.of(plant));
+
+        PlantResponse result = plantService.updatePlantName(plantId, email, "Monstera");
+
+        assertEquals(plantId, result.id());
+        assertEquals("Monstera", result.name());
+    }
+
+    @Test
+    void updateLastWateredAt_UpdatesLastWateredTimeAndReturnsPlantResponse() {
+        UUID plantId = UUID.randomUUID();
+        Plant plant = new Plant(plantId, "Paproć");
         Instant lastWateredAt = Instant.now();
-        when(plantRepository.findByIdAndUser(plantIds.get(0), user)).thenReturn(Optional.of(plant));
+        when(plantRepository.findByIdAndUser(plantId, user)).thenReturn(Optional.of(plant));
         when(userService.findByEmail(email)).thenReturn(user);
 
-        PlantResponse result = plantService.updateLastWateredTime(plantIds.get(0), email);
+        PlantResponse result = plantService.updateLastWateredAt(plantId, email);
 
-        assertEquals(plantIds.get(0), result.id());
+        assertEquals(plantId, result.id());
         assertEquals("Paproć", result.name());
         assertEquals(lastWateredAt.atZone(ZoneOffset.UTC).toLocalDate(),
                 result.lastWateredAt().atZone(ZoneOffset.UTC).toLocalDate());
     }
 
     @Test
-    void setLastWateredTime_ThrowsPlantNotFoundException_WhenWateringNonExistentPlant() {
-        generateUUIDs(1);
-        when(plantRepository.findByIdAndUser(plantIds.get(0), user)).thenReturn(Optional.empty());
+    void updateLastWateredAt_ThrowsPlantNotFoundException_WhenWateringNonExistentPlant() {
+        UUID plantId = UUID.randomUUID();
+        when(plantRepository.findByIdAndUser(plantId, user)).thenReturn(Optional.empty());
         when(userService.findByEmail(email)).thenReturn(user);
 
-        assertThatThrownBy(() -> plantService.updateLastWateredTime(plantIds.get(0), email))
+        assertThatThrownBy(() -> plantService.updateLastWateredAt(plantId, email))
                 .isInstanceOf(PlantNotFoundException.class)
                 .hasMessageContaining(
-                        "Plant with id '" + plantIds.get(0) + "' does not exist");
+                        "Plant with id '" + plantId + "' does not exist");
     }
 
     @Test
     void removePlant_RemovesPlant_WhenPlantExists() {
-        generateUUIDs(1);
+        UUID plantId = UUID.randomUUID();
 
-        Plant plant = new Plant(plantIds.get(0), "Paproć", Instant.now().minus(Duration.ofDays(1)));
-        when(plantRepository.findByIdAndUser(plantIds.get(0), user)).thenReturn(Optional.of(plant));
+        Plant plant = new Plant(plantId, "Paproć", Instant.now().minus(Duration.ofDays(1)));
+        when(plantRepository.findByIdAndUser(plantId, user)).thenReturn(Optional.of(plant));
         when(userService.findByEmail(email)).thenReturn(user);
 
-        plantService.deletePlant(plantIds.get(0), email);
+        plantService.deletePlant(plantId, email);
 
         verify(plantRepository).delete(plant);
     }
 
     @Test
     void removePlant_ThrowsPlantNotFoundException_WhenPlantNotFound() {
-        generateUUIDs(1);
-        when(plantRepository.findByIdAndUser(plantIds.get(0), user)).thenReturn(Optional.empty());
+        UUID plantId = UUID.randomUUID();
+        when(plantRepository.findByIdAndUser(plantId, user)).thenReturn(Optional.empty());
         when(userService.findByEmail(email)).thenReturn(user);
 
-        assertThatThrownBy(() -> plantService.deletePlant(plantIds.get(0), email))
+        assertThatThrownBy(() -> plantService.deletePlant(plantId, email))
                 .isInstanceOf(PlantNotFoundException.class)
                 .hasMessageContaining(
-                        "Plant with id '" + plantIds.get(0) + "' does not exist");
+                        "Plant with id '" + plantId + "' does not exist");
 
     }
 

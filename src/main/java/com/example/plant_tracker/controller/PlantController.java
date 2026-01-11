@@ -2,7 +2,7 @@ package com.example.plant_tracker.controller;
 
 import com.example.plant_tracker.dto.CreatePlantRequest;
 import com.example.plant_tracker.dto.PlantResponse;
-import com.example.plant_tracker.dto.UpdateLastWateredRequest;
+import com.example.plant_tracker.dto.UpdatePlantNameRequest;
 import com.example.plant_tracker.service.PlantService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -68,8 +68,21 @@ public class PlantController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<PlantResponse> updatePlantName(
+        @PathVariable UUID id,
+        @Valid @RequestBody UpdatePlantNameRequest request,
+        Authentication authentication
+    ) {
+        String email = authentication.getName();
+        log.debug("Updating name for plant: {} by user: {}", id, email);
+
+        PlantResponse response = plantService.updatePlantName(id, email, request.name());
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/{id}/last-watered")
-    public ResponseEntity<PlantResponse> updateLastWatered(
+    public ResponseEntity<PlantResponse> updateLastWateredAt(
             @PathVariable UUID id,
             Authentication authentication
     ) {
@@ -77,7 +90,7 @@ public class PlantController {
         String email = authentication.getName();
         log.debug("Updating last watered time for plant: {} by user: {}", id, email);
 
-        PlantResponse response = plantService.updateLastWateredTime(id, email);
+        PlantResponse response = plantService.updateLastWateredAt(id, email);
         return ResponseEntity.ok(response);
     }
 

@@ -7,7 +7,6 @@ import com.example.plant_tracker.security.SecurityConfig;
 import com.example.plant_tracker.security.jwt.JwtUtils;
 import com.example.plant_tracker.service.PlantService;
 import com.example.plant_tracker.service.UserDetailsServiceImpl;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -43,40 +41,28 @@ class PlantControllerTest {
     @MockitoBean
     private PlantService plantService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockitoBean
     private JwtUtils jwtUtils;
 
     @MockitoBean
     UserDetailsServiceImpl userDetailsService;
 
-    private List<UUID> plantIds;
-
-    private void generateUUIDs(int amount) {
-        plantIds = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
-            plantIds.add(UUID.randomUUID());
-        }
-    }
-
     private final String email = "user@example.com";
 
     @Test
     @WithMockUser(username = "user@example.com")
     void createPlant_Returns201_WhenValidRequest() throws Exception {
-        generateUUIDs(1);
+        UUID plantId = UUID.randomUUID();
 
         when(plantService.createPlant(any(), any())).thenReturn(
-                new PlantResponse(plantIds.get(0), "Oleander", null)
+                new PlantResponse(plantId, "Oleander", null)
         );
 
         mockMvc.perform(post("/api/plants")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"Oleander\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(plantIds.get(0).toString()));
+                .andExpect(jsonPath("$.id").value(plantId.toString()));
     }
 
     @Test
@@ -106,9 +92,10 @@ class PlantControllerTest {
     @Test
     @WithMockUser(username = "user@example.com")
     void getAllPlants_Returns200WithPlants_WhenPlantsExist() throws Exception {
-        generateUUIDs(2);
-        PlantResponse plant1 = new PlantResponse(plantIds.get(0), "Paproć", null);
-        PlantResponse plant2 = new PlantResponse(plantIds.get(1), "Mięta", null);
+        UUID plantId1 = UUID.randomUUID();
+        UUID plantId2 = UUID.randomUUID();
+        PlantResponse plant1 = new PlantResponse(plantId1, "Paproć", null);
+        PlantResponse plant2 = new PlantResponse(plantId2, "Mięta", null);
 
         when(plantService.getUserPlants(Sort.Direction.ASC, "name", email)).thenReturn(List.of(plant2, plant1));
         mockMvc.perform(get("/api/plants"))
@@ -123,11 +110,13 @@ class PlantControllerTest {
     @Test
     @WithMockUser(username = "user@example.com")
     void getAllPlants_ReturnsPlantsSortedByNameAsc_WhenNoSortParamGiven() throws Exception {
-        generateUUIDs(3);
+        UUID plantId1 = UUID.randomUUID();
+        UUID plantId2 = UUID.randomUUID();
+        UUID plantId3 = UUID.randomUUID();
         Instant lastWateredAt = Instant.now().minus(Duration.ofDays(3));
-        PlantResponse plant1 = new PlantResponse(plantIds.get(0), "Paproć", lastWateredAt);
-        PlantResponse plant2 = new PlantResponse(plantIds.get(1), "Mięta", null);
-        PlantResponse plant3 = new PlantResponse(plantIds.get(2), "Oleander", null);
+        PlantResponse plant1 = new PlantResponse(plantId1, "Paproć", lastWateredAt);
+        PlantResponse plant2 = new PlantResponse(plantId2, "Mięta", null);
+        PlantResponse plant3 = new PlantResponse(plantId3, "Oleander", null);
 
         when(plantService.getUserPlants(Sort.Direction.ASC, "name", email))
                 .thenReturn(List.of(plant2, plant3, plant1));
@@ -136,13 +125,13 @@ class PlantControllerTest {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$", hasSize(3)),
-                        jsonPath("$[0].id").value(plantIds.get(1).toString()),
+                        jsonPath("$[0].id").value(plantId2.toString()),
                         jsonPath("$[0].name").value("Mięta"),
                         jsonPath("$[0].lastWateredAt").isEmpty(),
-                        jsonPath("$[1].id").value(plantIds.get(2).toString()),
+                        jsonPath("$[1].id").value(plantId3.toString()),
                         jsonPath("$[1].name").value("Oleander"),
                         jsonPath("$[1].lastWateredAt").isEmpty(),
-                        jsonPath("$[2].id").value(plantIds.get(0).toString()),
+                        jsonPath("$[2].id").value(plantId1.toString()),
                         jsonPath("$[2].name").value("Paproć"),
                         jsonPath("$[2].lastWateredAt").value(lastWateredAt.toString())
                 );
@@ -170,46 +159,46 @@ class PlantControllerTest {
 
     @Test
     @WithMockUser(username = "user@example.com")
-    void updateLastWateredTime_Returns200_WhenValid() throws Exception {
-        generateUUIDs(1);
+    void updateLastWateredAt_Returns200_WhenValid() throws Exception {
+        UUID plantId = UUID.randomUUID();
         Instant lastWateredAt = Instant.now();
 
-        when(plantService.updateLastWateredTime(any(), eq(email))).thenReturn(
-                new PlantResponse(plantIds.get(0), "Oleander", lastWateredAt)
+        when(plantService.updateLastWateredAt(any(), eq(email))).thenReturn(
+                new PlantResponse(plantId, "Oleander", lastWateredAt)
         );
 
-        mockMvc.perform(patch("/api/plants/" + plantIds.get(0) + "/last-watered")
+        mockMvc.perform(patch("/api/plants/" + plantId + "/last-watered")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"lastWateredAt\":\"" + lastWateredAt + "\"}"))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.id").value(plantIds.get(0).toString()),
+                        jsonPath("$.id").value(plantId.toString()),
                         jsonPath("$.lastWateredAt").value(lastWateredAt.toString())
                 );
     }
 
     @Test
     @WithMockUser(username = "user@example.com")
-    void updateLastWateredTime_Returns404_WhenPlantNotFound() throws Exception {
-        generateUUIDs(1);
+    void updateLastWateredAt_Returns404_WhenPlantNotFound() throws Exception {
+        UUID plantId = UUID.randomUUID();
         Instant lastWateredAt = Instant.now();
 
-        when(plantService.updateLastWateredTime(any(), eq(email)))
-                .thenThrow(new PlantNotFoundException(plantIds.get(0)));
+        when(plantService.updateLastWateredAt(any(), eq(email)))
+                .thenThrow(new PlantNotFoundException(plantId));
 
-        mockMvc.perform(patch("/api/plants/" + plantIds.get(0) + "/last-watered")
+        mockMvc.perform(patch("/api/plants/" + plantId + "/last-watered")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"lastWateredAt\":\"" + lastWateredAt.toString() + "\"}"))
                 .andExpectAll(
                         status().isNotFound(),
                         content().string(containsString(
-                                "Plant with id '" + plantIds.get(0) + "' does not exist"))
+                                "Plant with id '" + plantId + "' does not exist"))
                 );
     }
 
     @Test
     @WithMockUser(username = "user@example.com")
-    void updateLastWateredTime_Returns400_WhenInvalidDate() throws Exception {
+    void updateLastWateredAt_Returns400_WhenInvalidDate() throws Exception {
 
         mockMvc.perform(patch("/api/plants/1/last-watered")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -220,30 +209,30 @@ class PlantControllerTest {
     @Test
     @WithMockUser(username = "user@example.com")
     void deletePlant_Returns204_WhenPlantExists() throws Exception {
-        generateUUIDs(1);
+        UUID plantId = UUID.randomUUID();
 
-        doNothing().when(plantService).deletePlant(plantIds.get(0), email);
+        doNothing().when(plantService).deletePlant(plantId, email);
 
-        mockMvc.perform(delete("/api/plants/" + plantIds.get(0)))
+        mockMvc.perform(delete("/api/plants/" + plantId))
                 .andExpect(status().isNoContent());
 
-        verify(plantService, times(1)).deletePlant(plantIds.get(0), email);
+        verify(plantService, times(1)).deletePlant(plantId, email);
     }
 
     @Test
     @WithMockUser(username = "user@example.com")
     void deletePlant_Returns404_WhenPlantMissing() throws Exception {
-        generateUUIDs(1);
+        UUID plantId = UUID.randomUUID();
 
-        doThrow(new PlantNotFoundException(plantIds.get(0)))
-                .when(plantService).deletePlant(plantIds.get(0), email);
+        doThrow(new PlantNotFoundException(plantId))
+                .when(plantService).deletePlant(plantId, email);
 
-        mockMvc.perform(delete("/api/plants/" + plantIds.get(0))
+        mockMvc.perform(delete("/api/plants/" + plantId)
                 .with(csrf()))
                 .andExpectAll(
                         status().isNotFound(),
                         content().string(containsString(
-                                "Plant with id '" + plantIds.get(0) + "' does not exist"))
+                                "Plant with id '" + plantId + "' does not exist"))
                 );
     }
 
@@ -251,6 +240,37 @@ class PlantControllerTest {
     @WithMockUser(username = "user@example.com")
     void deletePlant_Returns400_WhenInvalidId() throws Exception {
         mockMvc.perform(delete("/api/plants/NaN"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com")
+    void updatePlantName_Returns200_WhenValid() throws Exception {
+        UUID plantId = UUID.randomUUID();
+        String newName = "NewPlantName";
+
+        when(plantService.updatePlantName(any(), eq(email), eq(newName))).thenReturn(
+                new PlantResponse(plantId, newName, null)
+        );
+
+        mockMvc.perform(patch("/api/plants/" + plantId + "/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + newName + "\"}"))
+                .andExpectAll(
+                        status().isOk(),
+                        jsonPath("$.id").value(plantId.toString()),
+                        jsonPath("$.name").value(newName)
+                );
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com")
+    void updatePlantName_Returns400_WhenNameIsBlank() throws Exception {
+        UUID plantId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/plants/" + plantId + "/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest());
     }
 }
